@@ -1,0 +1,127 @@
+<div class="page">
+
+  <!-- ===== CONTENT CARD ===== -->
+  <main class="content-card">
+
+    <!-- Toolbar / Search -->
+    <div class="toolbar">
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Search..."
+        [value]="searchTerm()"
+        (input)="onSearchChange($event)"
+        aria-label="Buscar productos"
+      />
+      <button class="btn-add" (click)="goToAdd()">Agregar</button>
+    </div>
+
+    <!-- Error Banner -->
+    @if (error()) {
+      <div class="error-banner" role="alert">
+        <span class="error-icon" aria-hidden="true">!</span>
+        <span>{{ error() }}</span>
+      </div>
+    }
+
+    <!-- Loading -->
+    @if (loading()) {
+      <div class="loading-state" aria-live="polite">
+        <div class="loading-spinner"></div>
+        <span>Cargando productos...</span>
+      </div>
+    } @else {
+
+      <!-- Table -->
+      <div class="table-wrapper">
+        <table class="products-table">
+          <thead>
+            <tr>
+              <th scope="col">Logo</th>
+              <th scope="col">Nombre del producto</th>
+              <th scope="col">
+                Descripción
+                <span class="info-icon" title="Descripción detallada del producto financiero" aria-label="Más información sobre Descripción">i</span>
+              </th>
+              <th scope="col">
+                Fecha de liberación
+                <span class="info-icon" title="Fecha en que el producto fue publicado" aria-label="Más información sobre Fecha de liberación">i</span>
+              </th>
+              <th scope="col">
+                Fecha de reestructuración
+                <span class="info-icon" title="Fecha de la última reestructuración del producto" aria-label="Más información sobre Fecha de reestructuración">i</span>
+              </th>
+              <th scope="col"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (product of displayedProducts(); track product.id) {
+              <tr>
+                <td class="logo-cell">
+                  @if (hasLogoError(product.id)) {
+                    <div
+                      class="avatar"
+                      [style.background-color]="getAvatarColor(product.name)"
+                      role="img"
+                      [attr.aria-label]="'Logo de ' + product.name"
+                    >{{ getInitial(product.name) }}</div>
+                  } @else {
+                    <img
+                      class="product-logo"
+                      [src]="product.logo"
+                      [alt]="'Logo de ' + product.name"
+                      (error)="onLogoError(product.id)"
+                    />
+                  }
+                </td>
+                <td>{{ product.name }}</td>
+                <td>{{ product.description }}</td>
+                <td>{{ product.date_release | date:'dd/MM/yyyy' }}</td>
+                <td>{{ product.date_revision | date:'dd/MM/yyyy' }}</td>
+                <td class="actions-cell">
+                  <div class="action-menu">
+                    <button
+                      class="menu-btn"
+                      (click)="toggleMenu(product.id, $event)"
+                      [attr.aria-expanded]="openMenuId() === product.id"
+                      aria-label="Opciones"
+                    >&#8942;</button>
+                    @if (openMenuId() === product.id) {
+                      <ul class="dropdown" role="menu">
+                        <li role="none">
+                          <button role="menuitem" (click)="goToEdit(product.id, $event)">Editar</button>
+                        </li>
+                      </ul>
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="no-results">No se encontraron productos.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+    }
+
+    <!-- Footer -->
+    <div class="table-footer">
+      <span class="results-count">{{ totalResults() }} Resultados</span>
+      <select
+        class="page-size-select"
+        [value]="pageSize()"
+        (change)="onPageSizeChange($event)"
+        aria-label="Elementos por página"
+      >
+        @for (size of pageSizeOptions; track size) {
+          <option [value]="size">{{ size }}</option>
+        }
+      </select>
+    </div>
+
+  </main>
+
+</div>

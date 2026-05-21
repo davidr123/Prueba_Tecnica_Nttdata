@@ -1,0 +1,43 @@
+.app-header {
+  width: 100%;
+  padding: 1rem 0;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.header-icon {
+  width: 28px;
+  height: 28px;
+  color: #2d3a8c;
+}
+
+.header-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+/* ── Responsive ─────────────────────────────────────── */
+@media (max-width: 576px) {
+  .app-header {
+    padding: 0.75rem 0;
+  }
+
+  .header-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .header-title {
+    font-size: 1rem;
+  }
+}
