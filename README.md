@@ -23,8 +23,8 @@ ng version
 Clona el repositorio e instala las dependencias:
 
 ```bash
-git clone https://github.com/tu-usuario/prueba-tecnica-nttdata.git
-cd prueba-tecnica-nttdata
+git clone https://github.com/davidr123/Prueba_Tecnica_Nttdata.git
+cd Prueba_Tecnica_Nttdata
 npm install
 ```
 
@@ -32,10 +32,10 @@ npm install
 
 El proyecto usa los archivos en `src/environments/`:
 
-- `environment.ts` → desarrollo (por defecto apunta a `http://localhost:3002/bp/products`)
+- `environment.ts` en desarrollo por defecto apunta a `http://localhost:3002/bp/products`
 - `environment.prod.ts` → producción
 
-Si necesitas cambiar la URL de la API, edita el campo `apiUrl` en el archivo correspondiente antes de compilar.
+Si necesita cambiar la URL de la API, edita el campo `apiUrl` en el archivo `environment.ts` correspondiente antes de compilar.
 
 ## Levantar el servidor de desarrollo
 
@@ -46,8 +46,10 @@ npm start
 o equivalentemente:
 
 ```bash
-ng serve
+ng serve 
 ```
+
+
 
 Abre el navegador en `http://localhost:4200/`. La aplicación se recarga automáticamente al guardar cambios.
 
