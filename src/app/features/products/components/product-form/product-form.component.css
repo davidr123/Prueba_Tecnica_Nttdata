@@ -1,6 +1,4 @@
-/* ===========================
-   PAGE LAYOUT
-=========================== */
+
 :host {
   display: block;
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
@@ -16,9 +14,6 @@
   padding: 2rem 1rem 3rem;
 }
 
-/* ===========================
-   FORM CARD
-=========================== */
 .form-card {
   width: 100%;
   max-width: 560px;
@@ -36,9 +31,7 @@
   margin-bottom: 1.5rem;
 }
 
-/* ===========================
-   LOADING STATE
-=========================== */
+
 .loading-state {
   display: flex;
   align-items: center;
@@ -63,9 +56,6 @@
   to { transform: rotate(360deg); }
 }
 
-/* ===========================
-   ERROR BANNER
-=========================== */
 .error-banner {
   display: flex;
   align-items: center;
@@ -93,9 +83,7 @@
   flex-shrink: 0;
 }
 
-/* ===========================
-   FORM GRID (2 columns)
-=========================== */
+
 form {
   display: flex;
   flex-direction: column;
@@ -108,9 +96,6 @@ form {
   gap: 1rem;
 }
 
-/* ===========================
-   FORM FIELD
-=========================== */
 .form-field {
   display: flex;
   flex-direction: column;
@@ -158,9 +143,6 @@ input:disabled {
   border-color: #e5e7eb;
 }
 
-/* ===========================
-   ERROR & HINT TEXT
-=========================== */
 .field-error {
   font-size: 0.75rem;
   color: #ef4444;
@@ -173,9 +155,7 @@ input:disabled {
   margin-top: 1px;
 }
 
-/* ===========================
-   ACTIONS
-=========================== */
+
 .form-actions {
   display: flex;
   justify-content: center;
@@ -220,9 +200,7 @@ input:disabled {
   cursor: not-allowed;
 }
 
-/* ===========================
-   RESPONSIVE
-=========================== */
+/* RESPONSIVE STYLES */
 @media (max-width: 480px) {
   .form-card {
     padding: 1.5rem 1rem;

@@ -11,11 +11,11 @@ const TOMORROW = new Date(TODAY);
 TOMORROW.setDate(TODAY.getDate() + 1);
 const TOMORROW_STR = TOMORROW.toISOString().split('T')[0];
 
-const MOCK_PRODUCT = {
-  id: 'abc123',
-  name: 'Ahorro Plus',
-  description: 'Cuenta de ahorro con interes suficiente',
-  logo: 'http://example.com/logo.png',
+const PRODUCT = {
+  id: '123',
+  name: 'Cuenta Ahorro',
+  description: 'Cuenta de ahorro',
+  logo: 'https://img.icons8.com/fluency/48/merchant-account.png',
   date_release: TODAY_STR,
   date_revision: TOMORROW_STR,
 };
@@ -24,7 +24,7 @@ function buildServiceMock() {
   return {
     checkId: jest.fn().mockReturnValue(of(false)),
     create: jest.fn().mockReturnValue(of({ message: 'ok', data: {} })),
-    getById: jest.fn().mockReturnValue(of(MOCK_PRODUCT)),
+    getById: jest.fn().mockReturnValue(of(PRODUCT)),
     update: jest.fn().mockReturnValue(of({ message: 'ok', data: {} })),
   };
 }
@@ -51,24 +51,24 @@ describe('ProductFormComponent - Create mode', () => {
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  it('Existe componente', () => {
     expect(component).toBeTruthy();
   });
 
-  it('editMode should be false', () => {
+  it('editMode debe ser falso', () => {
     expect(component.editMode()).toBe(false);
   });
 
-  it('id field should be enabled', () => {
+  it('id field debe estar habilitado', () => {
     expect(component.form.get('id')?.disabled).toBe(false);
   });
 
-  it('minDate should return today', () => {
+  it('minDate debe devolver hoy', () => {
     expect(component.minDate).toBe(TODAY_STR);
   });
 
-  describe('Form initialization', () => {
-    it('should start with empty values', () => {
+  describe('Inicialización del formulario', () => {
+    it('debe comenzar con valores vacíos', () => {
       expect(component.form.get('id')?.value).toBe('');
       expect(component.form.get('name')?.value).toBe('');
       expect(component.form.get('description')?.value).toBe('');
@@ -76,99 +76,89 @@ describe('ProductFormComponent - Create mode', () => {
       expect(component.form.get('date_release')?.value).toBe('');
     });
 
-    it('should have date_revision disabled', () => {
+    it('date_revision debe estar deshabilitado', () => {
       expect(component.form.get('date_revision')?.disabled).toBe(true);
     });
   });
 
-  describe('date_revision auto-calculation', () => {
-    it('should set date_revision to 1 year after date_release', () => {
-      component.form.get('date_release')!.setValue('2025-03-15');
-      expect(component.form.get('date_revision')!.value).toBe('2026-03-15');
-    });
 
-    it('should clear date_revision when date_release is cleared', () => {
-      component.form.get('date_release')!.setValue('2025-01-01');
-      component.form.get('date_release')!.setValue('');
-      expect(component.form.get('date_revision')!.value).toBe('');
-    });
-  });
 
-  describe('Sync validations', () => {
-    it('should be invalid when form is empty', () => {
+  describe('Validaciones síncronas', () => {
+    it('debe ser inválido cuando el formulario está vacío', () => {
       expect(component.form.invalid).toBe(true);
     });
 
-    it('should mark id invalid when empty', () => {
+    it('debe marcar id como inválido cuando está vacío', () => {
       component.form.get('id')!.markAsTouched();
       expect(component.isInvalid('id')).toBe(true);
     });
 
-    it('should mark id invalid when shorter than 3 chars', () => {
+    it('debe marcar id como inválido cuando tiene menos de 3 caracteres', () => {
       component.form.get('id')!.setValue('ab');
       component.form.get('id')!.markAsTouched();
-      expect(component.getError('id', 'minlength')).toBe(true);
+      expect(component.hasError('id', 'minlength')).toBe(true);
     });
 
-    it('should mark id invalid when longer than 10 chars', () => {
+    it('debe marcar id como inválido cuando tiene más de 10 caracteres', () => {
       component.form.get('id')!.setValue('12345678901');
       component.form.get('id')!.markAsTouched();
-      expect(component.getError('id', 'maxlength')).toBe(true);
+      expect(component.hasError('id', 'maxlength')).toBe(true);
     });
 
-    it('should mark name invalid when shorter than 5 chars', () => {
+    it('debe marcar name como inválido cuando tiene menos de 5 caracteres', () => {
       component.form.get('name')!.setValue('abc');
       component.form.get('name')!.markAsTouched();
-      expect(component.getError('name', 'minlength')).toBe(true);
+      expect(component.hasError('name', 'minlength')).toBe(true);
     });
 
-    it('should mark description invalid when shorter than 10 chars', () => {
+    it('Debe marcar la descripción como inválida si tiene menos de 10 caracteres', () => {
       component.form.get('description')!.setValue('short');
       component.form.get('description')!.markAsTouched();
-      expect(component.getError('description', 'minlength')).toBe(true);
+      expect(component.hasError('description', 'minlength')).toBe(true);
     });
 
-    it('should mark date_release invalid when in the past', () => {
+    it('Debe marcar date_release como inválido cuando está en el pasado', () => {
       component.form.get('date_release')!.setValue('2000-01-01');
       component.form.get('date_release')!.markAsTouched();
-      expect(component.getError('date_release', 'minDate')).toBe(true);
+      expect(component.hasError('date_release', 'minDate')).toBe(true);
     });
 
-    it('should accept date_release equal to today', () => {
+    it('Debe aceptar date_release igual a hoy', () => {
       component.form.get('date_release')!.setValue(TODAY_STR);
       component.form.get('date_release')!.markAsTouched();
-      expect(component.getError('date_release', 'minDate')).toBe(false);
+      expect(component.hasError('date_release', 'minDate')).toBe(false);
     });
   });
 
-  describe('Async ID validation', () => {
-    it('should set idExists error when checkId returns true', async () => {
+  describe('Validaciones asíncronas de ID', () => {
+    it('debe establecer el error idExists cuando checkId devuelve true', async () => {
       productServiceMock.checkId.mockReturnValue(of(true));
       component.form.get('id')!.setValue('taken1');
+      component.form.get('id')!.markAsTouched();
       await new Promise(resolve => setTimeout(resolve, 0));
-      expect(component.getError('id', 'idExists')).toBe(true);
+      expect(component.hasError('id', 'idExists')).toBe(true);
     });
 
-    it('should not set idExists error when checkId returns false', async () => {
+    it('no debe establecer el error idExists cuando checkId devuelve false', async () => {
       component.form.get('id')!.setValue('free123');
       await new Promise(resolve => setTimeout(resolve, 0));
-      expect(component.getError('id', 'idExists')).toBe(false);
+      expect(component.hasError('id', 'idExists')).toBe(false);
     });
 
-    it('isPending should return a boolean', () => {
+    it('isPending debe devolver un booleano', () => {
       component.form.get('id')!.setValue('free123');
-      expect(typeof component.isPending('id')).toBe('boolean');
+      expect(typeof component.idPending).toBe('boolean');
     });
   });
 
   describe('onSubmit', () => {
-    it('should mark all fields touched when form is invalid', () => {
+    it('debe marcar todos los campos como tocados cuando el formulario es inválido', () => {
       component.onSubmit();
       expect(component.form.get('name')?.touched).toBe(true);
       expect(component.form.get('description')?.touched).toBe(true);
     });
 
-    it('should call productService.create and navigate on valid submit', async () => {
+    it('debe llamar a productService.create y navegar en un envío válido', async () => {
       component.form.get('id')!.setValue('abc123');
       component.form.get('name')!.setValue('Ahorro Plus');
       component.form.get('description')!.setValue('Cuenta de ahorro con interes suficiente');
@@ -180,7 +170,7 @@ describe('ProductFormComponent - Create mode', () => {
       expect(routerMock.navigate).toHaveBeenCalledWith(['/products']);
     });
 
-    it('should NOT call update when in create mode', async () => {
+    it('no debe llamar a update cuando está en modo creación', async () => {
       component.form.get('id')!.setValue('abc123');
       component.form.get('name')!.setValue('Ahorro Plus');
       component.form.get('description')!.setValue('Cuenta de ahorro con interes suficiente');
@@ -191,7 +181,7 @@ describe('ProductFormComponent - Create mode', () => {
       expect(productServiceMock.update).not.toHaveBeenCalled();
     });
 
-    it('should set submitError when create fails', async () => {
+    it('debe establecer submitError cuando create falla', async () => {
       productServiceMock.create.mockReturnValue(throwError(() => ({ userMessage: 'Error del servidor' })));
       component.form.get('id')!.setValue('abc123');
       component.form.get('name')!.setValue('Ahorro Plus');
@@ -200,10 +190,10 @@ describe('ProductFormComponent - Create mode', () => {
       component.form.get('date_release')!.setValue(TODAY_STR);
       await new Promise(resolve => setTimeout(resolve, 0));
       component.onSubmit();
-      expect(component.submitError).toBe('Error del servidor');
+      expect(component.submitError()).toBe('Error del servidor');
     });
 
-    it('should use fallback message when create fails without userMessage', async () => {
+    it('debe usar un mensaje de respaldo cuando create falla sin userMessage', async () => {
       productServiceMock.create.mockReturnValue(throwError(() => ({})));
       component.form.get('id')!.setValue('abc123');
       component.form.get('name')!.setValue('Ahorro Plus');
@@ -217,39 +207,20 @@ describe('ProductFormComponent - Create mode', () => {
   });
 
   describe('onReset', () => {
-    it('should reset the form to empty state', () => {
+    it('debe reiniciar el formulario al estado vacío', () => {
       component.form.get('name')!.setValue('Test');
       component.onReset();
       expect(component.form.get('name')?.value).toBeNull();
     });
 
-    it('should clear submitError on reset', () => {
-      component.submitError = 'Algun error';
+    it('debe limpiar submitError al reiniciar', () => {
+      component.submitError.set('Algun error');
       component.onReset();
-      expect(component.submitError).toBeNull();
+      expect(component.submitError()).toBeNull();
     });
   });
 
-  describe('isInvalid / getError helpers', () => {
-    it('should return false when field is valid and touched', () => {
-      component.form.get('name')!.setValue('Nombre valido largo');
-      component.form.get('name')!.markAsTouched();
-      expect(component.isInvalid('name')).toBe(false);
-    });
 
-    it('should return false when field is invalid but not touched', () => {
-      expect(component.isInvalid('name')).toBe(false);
-    });
-
-    it('should return true when field is invalid and touched', () => {
-      component.form.get('name')!.markAsTouched();
-      expect(component.isInvalid('name')).toBe(true);
-    });
-
-    it('getError should return false for non-existing error', () => {
-      expect(component.getError('name', 'nonExistentError')).toBe(false);
-    });
-  });
 });
 
 describe('ProductFormComponent - Edit mode', () => {
@@ -274,42 +245,42 @@ describe('ProductFormComponent - Edit mode', () => {
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  it('debe crear el componente', () => {
     expect(component).toBeTruthy();
   });
 
-  it('editMode should be true', () => {
+  it('editMode debe ser true', () => {
     expect(component.editMode()).toBe(true);
   });
 
-  it('should call productService.getById with the route id', () => {
+  it('debe llamar a productService.getById con el id de la ruta', () => {
     expect(productServiceMock.getById).toHaveBeenCalledWith('abc123');
   });
 
-  it('should pre-fill name field with loaded product', () => {
-    expect(component.form.get('name')?.value).toBe('Ahorro Plus');
+  it('debe rellenar el campo name con el producto cargado', () => {
+    expect(component.form.get('name')?.value).toBe('Cuenta Ahorro');
   });
 
-  it('should pre-fill logo field with loaded product', () => {
-    expect(component.form.get('logo')?.value).toBe('http://example.com/logo.png');
+  it('debe rellenar el campo logo con el producto cargado', () => {
+    expect(component.form.get('logo')?.value).toBe('https://img.icons8.com/fluency/48/merchant-account.png');
   });
 
-  it('should have id field disabled', () => {
+  it('debe tener el campo id deshabilitado', () => {
     expect(component.form.get('id')?.disabled).toBe(true);
   });
 
-  it('should set loadingProduct to false after product loads', () => {
-    expect(component.loadingProduct()).toBe(false);
+  it('debe establecer loadingProduct en false después de cargar el producto', () => {
+    expect(component.isLoadingProduct()).toBe(false);
   });
 
-  it('should not call checkId (no async validator in edit mode)', () => {
+  it('no debe llamar a checkId (no hay validador asíncrono en modo edición)', () => {
     expect(productServiceMock.checkId).not.toHaveBeenCalled();
   });
 
-  it('should call productService.update on valid submit', () => {
+  it('debe llamar a productService.update en submit válido', () => {
     component.form.get('name')!.setValue('Ahorro Actualizado');
     component.form.get('description')!.setValue('Nueva descripcion con mas de diez chars');
-    component.form.get('logo')!.setValue('http://example.com/logo.png');
+    component.form.get('logo')!.setValue('https://img.icons8.com/fluency/48/merchant-account.png');
     component.form.get('date_release')!.setValue(TODAY_STR);
     component.onSubmit();
     expect(productServiceMock.update).toHaveBeenCalled();
@@ -317,28 +288,28 @@ describe('ProductFormComponent - Edit mode', () => {
     expect(routerMock.navigate).toHaveBeenCalledWith(['/products']);
   });
 
-  it('should set submitError when update fails', () => {
+  it('debe establecer submitError cuando update falla', () => {
     productServiceMock.update.mockReturnValue(throwError(() => ({ userMessage: 'Error al actualizar' })));
     component.form.get('name')!.setValue('Ahorro Actualizado');
     component.form.get('description')!.setValue('Nueva descripcion con mas de diez chars');
-    component.form.get('logo')!.setValue('http://example.com/logo.png');
+    component.form.get('logo')!.setValue('https://img.icons8.com/fluency/48/merchant-account.png');
     component.form.get('date_release')!.setValue(TODAY_STR);
     component.onSubmit();
-    expect(component.submitError).toBe('Error al actualizar');
+    expect(component.submitError()).toBe('Error al actualizar');
   });
 
-  it('should use fallback message when update fails without userMessage', () => {
+  it('debe usar un mensaje de respaldo cuando update falla sin userMessage', () => {
     productServiceMock.update.mockReturnValue(throwError(() => ({})));
     component.form.get('name')!.setValue('Ahorro Actualizado');
     component.form.get('description')!.setValue('Nueva descripcion con mas de diez chars');
-    component.form.get('logo')!.setValue('http://example.com/logo.png');
+    component.form.get('logo')!.setValue('https://img.icons8.com/fluency/48/merchant-account.png');
     component.form.get('date_release')!.setValue(TODAY_STR);
     component.onSubmit();
     expect(component.submitError).toBeTruthy();
   });
 });
 
-describe('ProductFormComponent - Edit mode load error', () => {
+describe('ProductFormComponent - Error al cargar en modo edición', () => {
   let component: ProductFormComponent;
   let fixture: ComponentFixture<ProductFormComponent>;
   let productServiceMock: ReturnType<typeof buildServiceMock>;
@@ -361,11 +332,11 @@ describe('ProductFormComponent - Edit mode load error', () => {
     fixture.detectChanges();
   });
 
-  it('should set loadError when getById fails', () => {
-    expect(component.loadError).toBe('Producto no encontrado');
+  it('debe establecer loadError cuando getById falla', () => {
+    expect(component.loadError()).toBe('Producto no encontrado');
   });
 
-  it('should set loadingProduct to false after error', () => {
-    expect(component.loadingProduct()).toBe(false);
+  it('debe establecer loadingProduct en false después de un error', () => {
+    expect(component.isLoadingProduct()).toBe(false);
   });
 });

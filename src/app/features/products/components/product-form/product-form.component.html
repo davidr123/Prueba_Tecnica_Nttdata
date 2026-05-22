@@ -3,33 +3,33 @@
 
     <h2 class="form-title">{{ editMode() ? 'Editar Producto' : 'Formulario de Registro' }}</h2>
 
-    <!-- Load error (edit mode) -->
-    @if (loadError) {
+
+    @if (loadError()) {
       <div class="error-banner" role="alert">
         <span class="error-icon" aria-hidden="true">!</span>
-        <span>{{ loadError }}</span>
+        <span>{{ loadError() }}</span>
       </div>
     }
 
-    <!-- Loading product (edit mode) -->
-    @if (loadingProduct()) {
+
+    @if (isLoadingProduct()) {
       <div class="loading-state" aria-live="polite">
         <div class="loading-spinner"></div>
         <span>Cargando producto...</span>
       </div>
     } @else {
 
-    <!-- Submit error -->
-    @if (submitError) {
+
+    @if (submitError()) {
       <div class="error-banner" role="alert">
         <span class="error-icon" aria-hidden="true">!</span>
-        <span>{{ submitError }}</span>
+        <span>{{ submitError() }}</span>
       </div>
     }
 
     <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
 
-      <!-- Row 1: ID | Nombre -->
+
       <div class="form-grid">
 
         <div class="form-field">
@@ -42,17 +42,17 @@
             [class.is-disabled]="editMode()"
             autocomplete="off"
           />
-          @if (!editMode() && isPending('id')) {
+          @if (!editMode() && idPending) {
             <span class="field-hint">Verificando ID...</span>
           }
           @if (!editMode() && isInvalid('id')) {
-            @if (getError('id', 'required')) {
+            @if (hasError('id', 'required')) {
               <span class="field-error">Este campo es requerido!</span>
-            } @else if (getError('id', 'minlength')) {
+            } @else if (hasError('id', 'minlength')) {
               <span class="field-error">Mínimo 3 caracteres!</span>
-            } @else if (getError('id', 'maxlength')) {
+            } @else if (hasError('id', 'maxlength')) {
               <span class="field-error">Máximo 10 caracteres!</span>
-            } @else if (getError('id', 'idExists')) {
+            } @else if (hasError('id', 'idExists')) {
               <span class="field-error">ID no válido!</span>
             }
           }
@@ -67,11 +67,11 @@
             [class.is-invalid]="isInvalid('name')"
           />
           @if (isInvalid('name')) {
-            @if (getError('name', 'required')) {
+            @if (hasError('name', 'required')) {
               <span class="field-error">Este campo es requerido!</span>
-            } @else if (getError('name', 'minlength')) {
+            } @else if (hasError('name', 'minlength')) {
               <span class="field-error">Mínimo 5 caracteres!</span>
-            } @else if (getError('name', 'maxlength')) {
+            } @else if (hasError('name', 'maxlength')) {
               <span class="field-error">Máximo 100 caracteres!</span>
             }
           }
@@ -79,7 +79,7 @@
 
       </div>
 
-      <!-- Row 2: Descripción | Logo -->
+
       <div class="form-grid">
 
         <div class="form-field">
@@ -91,11 +91,11 @@
             [class.is-invalid]="isInvalid('description')"
           />
           @if (isInvalid('description')) {
-            @if (getError('description', 'required')) {
+            @if (hasError('description', 'required')) {
               <span class="field-error">Este campo es requerido!</span>
-            } @else if (getError('description', 'minlength')) {
+            } @else if (hasError('description', 'minlength')) {
               <span class="field-error">Mínimo 10 caracteres!</span>
-            } @else if (getError('description', 'maxlength')) {
+            } @else if (hasError('description', 'maxlength')) {
               <span class="field-error">Máximo 200 caracteres!</span>
             }
           }
@@ -111,7 +111,7 @@
             [class.is-invalid]="isInvalid('logo')"
           />
           @if (isInvalid('logo')) {
-            @if (getError('logo', 'required')) {
+            @if (hasError('logo', 'required')) {
               <span class="field-error">Este campo es requerido!</span>
             }
           }
@@ -119,7 +119,6 @@
 
       </div>
 
-      <!-- Row 3: Fecha Liberación | Fecha Revisión -->
       <div class="form-grid">
 
         <div class="form-field">
@@ -132,9 +131,9 @@
             [class.is-invalid]="isInvalid('date_release')"
           />
           @if (isInvalid('date_release')) {
-            @if (getError('date_release', 'required')) {
+            @if (hasError('date_release', 'required')) {
               <span class="field-error">Este campo es requerido!</span>
-            } @else if (getError('date_release', 'minDate')) {
+            } @else if (hasError('date_release', 'minDate')) {
               <span class="field-error">La fecha debe ser igual o mayor a hoy!</span>
             }
           }
@@ -152,11 +151,11 @@
 
       </div>
 
-      <!-- Actions -->
+
       <div class="form-actions">
         <button type="button" class="btn-reset" (click)="onReset()">Reiniciar</button>
-        <button type="submit" class="btn-submit" [disabled]="submitting">
-          @if (submitting) { Enviando... } @else { Enviar }
+        <button type="submit" class="btn-submit" [disabled]="isSubmitting() || form.invalid || form.pending">
+          @if (isSubmitting()) { Enviando... } @else { Enviar }
         </button>
       </div>
 

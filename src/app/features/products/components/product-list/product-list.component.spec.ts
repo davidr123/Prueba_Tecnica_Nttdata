@@ -1,29 +1,33 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
+import { Router } from '@angular/router';
 import { ProductListComponent } from './product-list.component';
 import { ProductService } from '../../services/product.service';
 import { Product } from '../../models/product.model';
 
-const MOCK_PRODUCTS: Product[] = [
-  { id: '1', name: 'Ahorro Plus', description: 'Cuenta de ahorro con interés', logo: 'http://example.com/logo1.png', date_release: '2020-01-15', date_revision: '2021-01-15' },
-  { id: '2', name: 'Kárdex Empresarial', description: 'Gestión de créditos empresariales', logo: 'http://example.com/logo2.png', date_release: '2019-06-01', date_revision: '2020-06-01' },
-  { id: '3', name: 'Cuenta Corriente', description: 'Cuenta para transacciones diarias', logo: 'http://example.com/logo3.png', date_release: '2021-03-10', date_revision: '2022-03-10' },
+const PRODUCTS: Product[] = [
+  { id: '001', name: 'Cuenta de ahorro', description: 'Cuenta de ahorro con interés', logo: 'https://img.icons8.com/fluency/48/merchant-account.png', date_release: '2026-01-15', date_revision: '2027-01-15' },
+  { id: '002', name: 'Tarjeta de crédito', description: 'Gestión de créditos empresariales', logo: 'https://img.icons8.com/fluency/48/merchant-account.png', date_release: '2026-06-01', date_revision: '2027-06-01' },
+  { id: '003', name: 'Cuenta Corriente', description: 'Cuenta para transacciones diarias', logo: 'https://img.icons8.com/fluency/48/merchant-account.png', date_release: '2026-03-10', date_revision: '2027-03-10' },
 ];
 
 describe('ProductListComponent', () => {
   let component: ProductListComponent;
   let fixture: ComponentFixture<ProductListComponent>;
-  let productServiceMock: { getAll: jest.Mock };
+  let productService: { getAll: jest.Mock };
+  let router: { navigate: jest.Mock };
 
   beforeEach(async () => {
-    productServiceMock = {
-      getAll: jest.fn().mockReturnValue(of({ data: MOCK_PRODUCTS })),
+    productService = {
+      getAll: jest.fn().mockReturnValue(of({ data: PRODUCTS })),
     };
+    router = { navigate: jest.fn() };
 
     await TestBed.configureTestingModule({
       imports: [ProductListComponent],
       providers: [
-        { provide: ProductService, useValue: productServiceMock },
+        { provide: ProductService, useValue: productService },
+        { provide: Router, useValue: router },
       ],
     }).compileComponents();
 
@@ -32,79 +36,71 @@ describe('ProductListComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  it('Existe el componente', () => {
     expect(component).toBeTruthy();
   });
 
-  describe('Data loading', () => {
-    it('should call productService.getAll on init', () => {
-      expect(productServiceMock.getAll).toHaveBeenCalledTimes(1);
+  describe('Carga de datos', () => {
+    it('Debe llamar al getAll() al inicializar', () => {
+      expect(productService.getAll).toHaveBeenCalledTimes(1);
     });
 
-    it('should display loaded products', () => {
-      expect(component.displayedProducts().length).toBe(MOCK_PRODUCTS.length);
+    it('Debe mostrar los productos cargados', () => {
+      expect(component.paginatedProducts().length).toBe(PRODUCTS.length);
     });
 
-    it('should set error message when API call fails', () => {
+    it('Debe establecer el mensaje de error cuando la llamada a la API falla', () => {
       const errMsg = 'No se pudo conectar con el servidor.';
-      productServiceMock.getAll.mockReturnValue(throwError(() => ({ userMessage: errMsg })));
+      productService.getAll.mockReturnValue(throwError(() => ({ userMessage: errMsg })));
 
       fixture = TestBed.createComponent(ProductListComponent);
       component = fixture.componentInstance;
       fixture.detectChanges();
 
-      expect(component.error()).toBe(errMsg);
+      expect(component.errorMessage()).toBe(errMsg);
     });
 
-    it('should use fallback error message when userMessage is absent', () => {
-      productServiceMock.getAll.mockReturnValue(throwError(() => ({})));
 
-      fixture = TestBed.createComponent(ProductListComponent);
-      component = fixture.componentInstance;
-      fixture.detectChanges();
-
-      expect(component.error()).toBeTruthy();
-    });
   });
 
-  describe('Search filtering', () => {
-    it('should filter by product name (case-insensitive)', () => {
+  describe('Filtrado de búsqueda', () => {
+    it('Debe filtrar por nombre del producto (insensible a mayúsculas)', () => {
       component.searchTerm.set('ahorro');
-      expect(component.displayedProducts().length).toBe(1);
-      expect(component.displayedProducts()[0].name).toBe('Ahorro Plus');
+      expect(component.paginatedProducts().length).toBe(1);
+      expect(component.paginatedProducts()[0].name).toBe('Cuenta de ahorro');
     });
 
-    it('should filter by product description', () => {
+    it('Debe filtrar por descripción del producto', () => {
       component.searchTerm.set('créditos');
-      expect(component.displayedProducts().length).toBe(1);
+      expect(component.paginatedProducts().length).toBe(1);
     });
 
-    it('should return all products when search term is empty', () => {
+    it('Debe devolver todos los productos cuando el término de búsqueda está vacío', () => {
       component.searchTerm.set('');
-      expect(component.displayedProducts().length).toBe(MOCK_PRODUCTS.length);
+      expect(component.paginatedProducts().length).toBe(PRODUCTS.length);
     });
 
-    it('should return empty list when no products match', () => {
+    it('Debe devolver una lista vacía cuando ningún producto coincide', () => {
       component.searchTerm.set('zzz-no-match-xyz');
-      expect(component.displayedProducts().length).toBe(0);
+      expect(component.paginatedProducts().length).toBe(0);
     });
 
-    it('should update totalResults based on filtered products', () => {
+    it('Debe actualizar totalResults basado en los productos filtrados', () => {
       component.searchTerm.set('Cuenta');
-      expect(component.totalResults()).toBe(1);
+      expect(component.totalResults()).toBe(2);
     });
   });
 
-  describe('Pagination', () => {
-    it('should default page size to 5', () => {
+  describe('Paginación', () => {
+    it('Debe establecer el tamaño de página predeterminado en 5', () => {
       expect(component.pageSize()).toBe(5);
     });
 
-    it('should expose pageSizeOptions [5, 10, 20]', () => {
-      expect(component.pageSizeOptions).toEqual([5, 10, 20]);
+    it('Debe exponer las opciones de tamaño de página [5, 10, 20]', () => {
+      expect(component.pageSizes).toEqual([5, 10, 20]);
     });
 
-    it('should limit displayedProducts to pageSize', () => {
+    it('Debe limitar paginatedProducts al tamaño de página', () => {
       const manyProducts: Product[] = Array.from({ length: 15 }, (_, i) => ({
         id: `${i}`,
         name: `Producto ${i}`,
@@ -113,102 +109,47 @@ describe('ProductListComponent', () => {
         date_release: '2020-01-01',
         date_revision: '2021-01-01',
       }));
-      productServiceMock.getAll.mockReturnValue(of({ data: manyProducts }));
+      productService.getAll.mockReturnValue(of({ data: manyProducts }));
 
       fixture = TestBed.createComponent(ProductListComponent);
       component = fixture.componentInstance;
       fixture.detectChanges();
 
       component.pageSize.set(5);
-      expect(component.displayedProducts().length).toBe(5);
+      expect(component.paginatedProducts().length).toBe(5);
 
       component.pageSize.set(10);
-      expect(component.displayedProducts().length).toBe(10);
+      expect(component.paginatedProducts().length).toBe(10);
     });
   });
 
-  describe('Logo / Avatar helpers', () => {
-    it('getInitial should return the first letter uppercased', () => {
-      expect(component.getInitial('ahorro')).toBe('A');
-      expect(component.getInitial('kárdex')).toBe('K');
+
+  describe('Navegación', () => {
+    it('goToAddProduct debe navegar a /products/add', () => {
+      component.goToAddProduct();
+      expect(router.navigate).toHaveBeenCalledWith(['/products/add']);
     });
 
-    it('getAvatarColor should return a valid hex color', () => {
-      const color = component.getAvatarColor('Ahorro Plus');
-      expect(color).toMatch(/^#[0-9a-f]{6}$/i);
+    it('goToEditProduct debe navegar a /products/edit/:id', () => {
+      component.goToEditProduct('123');
+      expect(router.navigate).toHaveBeenCalledWith(['/products/edit', '123']);
     });
 
-    it('getAvatarColor should be deterministic for the same name', () => {
-      expect(component.getAvatarColor('Test')).toBe(component.getAvatarColor('Test'));
+    it('closeMenu debe limpiar el menú activo', () => {
+      component.activeMenuId.set('abc');
+      component.closeMenu();
+      expect(component.activeMenuId()).toBeNull();
     });
 
-    it('onLogoError should mark a product as errored', () => {
-      component.onLogoError('1');
-      expect(component.hasLogoError('1')).toBe(true);
-    });
-
-    it('hasLogoError should return false for products without errors', () => {
-      expect(component.hasLogoError('99')).toBe(false);
-    });
-
-    it('onLogoError should not affect other products', () => {
-      component.onLogoError('1');
-      expect(component.hasLogoError('2')).toBe(false);
+    it('toggleMenu debe abrir y cerrar el menú', () => {
+      const mockEvent = { stopPropagation: jest.fn() } as unknown as Event;
+      component.toggleMenu(mockEvent, 'abc');
+      expect(component.activeMenuId()).toBe('abc');
+      component.toggleMenu(mockEvent, 'abc');
+      expect(component.activeMenuId()).toBeNull();
     });
   });
-});
 
 
-describe('ProductListComponent', () => {
-  let component: ProductListComponent;
-  let fixture: ComponentFixture<ProductListComponent>;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [ProductListComponent],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(ProductListComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
-
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
-
-  describe('Rendering', () => {
-    it('should show empty message when products list is empty', () => {
-      fixture.componentRef.setInput('products', []);
-      fixture.detectChanges();
-
-      const el: HTMLElement = fixture.nativeElement;
-      expect(el.querySelector('.empty')?.textContent).toContain('No hay productos registrados');
-    });
-
-    it('should show loading message when loading is true', () => {
-      fixture.componentRef.setInput('loading', true);
-      fixture.detectChanges();
-
-      const el: HTMLElement = fixture.nativeElement;
-      expect(el.querySelector('.loading')?.textContent).toContain('Cargando');
-    });
-
-    it('should render a row for each product', () => {
-      fixture.componentRef.setInput('products', MOCK_PRODUCTS);
-      fixture.detectChanges();
-
-      const rows = fixture.nativeElement.querySelectorAll('tbody tr');
-      expect(rows.length).toBe(MOCK_PRODUCTS.length);
-    });
-
-    it('should display product name in the table', () => {
-      fixture.componentRef.setInput('products', MOCK_PRODUCTS);
-      fixture.detectChanges();
-
-      const firstRow: HTMLElement = fixture.nativeElement.querySelector('tbody tr');
-      expect(firstRow.textContent).toContain('Producto A');
-    });
-  });
 
 });

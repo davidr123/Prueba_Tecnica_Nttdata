@@ -1,59 +1,84 @@
-# PruebaTecnicaNttdata
+# Prueba Técnica NTTData
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.8.
+Aplicación Angular para la gestión de productos financieros.
 
-## Development server
+## Requisitos previos
 
-To start a local development server, run:
+Por favor asegurate de tener instalado lo siguiente antes de comenzar:
+
+- [Node.js](https://nodejs.org/) v22.16.0
+- [npm](https://www.npmjs.com/) v10 o superior
+- [Angular CLI](https://angular.dev/tools/cli) v21
+
+Puedes verificar las versiones con:
+
+```bash
+node -v
+npm -v
+ng version
+```
+
+## Instalación
+
+Clona el repositorio e instala las dependencias:
+
+```bash
+git clone https://github.com/tu-usuario/prueba-tecnica-nttdata.git
+cd prueba-tecnica-nttdata
+npm install
+```
+
+## Variables de entorno
+
+El proyecto usa los archivos en `src/environments/`:
+
+- `environment.ts` → desarrollo (por defecto apunta a `http://localhost:3002/bp/products`)
+- `environment.prod.ts` → producción
+
+Si necesitas cambiar la URL de la API, edita el campo `apiUrl` en el archivo correspondiente antes de compilar.
+
+## Levantar el servidor de desarrollo
+
+```bash
+npm start
+```
+
+o equivalentemente:
 
 ```bash
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Abre el navegador en `http://localhost:4200/`. La aplicación se recarga automáticamente al guardar cambios.
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Compilar para producción
 
 ```bash
-ng generate component component-name
+npm run build
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Los archivos compilados se generan en la carpeta `dist/`. Esta build aplica optimizaciones de rendimiento automáticamente.
+
+## Pruebas unitarias
+
+El proyecto usa [Jest](https://jestjs.io/) como framework de testing.
+
+### Ejecutar todas las pruebas
 
 ```bash
-ng generate --help
+npm test
 ```
 
-## Building
-
-To build the project run:
+### Ejecutar en modo watch (re-ejecuta al guardar cambios)
 
 ```bash
-ng build
+npm run test:watch
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+### Ejecutar con reporte de cobertura
 
 ```bash
-ng test
+npm run test:coverage
 ```
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+El reporte de cobertura se genera en la carpeta `coverage/`. Abre `coverage/index.html` en el navegador para ver el detalle por archivo.

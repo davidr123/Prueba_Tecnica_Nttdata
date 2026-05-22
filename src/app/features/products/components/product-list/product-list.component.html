@@ -1,127 +1,127 @@
-<div class="page">
+<div class="page-container">
 
-  <!-- ===== CONTENT CARD ===== -->
-  <main class="content-card">
 
-    <!-- Toolbar / Search -->
-    <div class="toolbar">
-      <input
-        type="text"
-        class="search-input"
-        placeholder="Search..."
-        [value]="searchTerm()"
-        (input)="onSearchChange($event)"
-        aria-label="Buscar productos"
-      />
-      <button class="btn-add" (click)="goToAdd()">Agregar</button>
+  <div class="list-toolbar">
+    <input
+      type="text"
+      class="search-input"
+      placeholder="Search..."
+      [formControl]="searchControl"
+      aria-label="Buscar producto"
+    />
+    <button class="btn-add" (click)="goToAddProduct()" type="button">
+      Agregar
+    </button>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="alert-error" role="alert">
+      <span class="alert-icon">&#9888;</span>
+      <span>{{ errorMessage() }}</span>
     </div>
+  }
 
-    <!-- Error Banner -->
-    @if (error()) {
-      <div class="error-banner" role="alert">
-        <span class="error-icon" aria-hidden="true">!</span>
-        <span>{{ error() }}</span>
-      </div>
-    }
 
-    <!-- Loading -->
-    @if (loading()) {
-      <div class="loading-state" aria-live="polite">
-        <div class="loading-spinner"></div>
-        <span>Cargando productos...</span>
-      </div>
-    } @else {
-
-      <!-- Table -->
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="loading-spinner"></div>
+      <span>Cargando productos...</span>
+    </div>
+  } @else {
+    <div class="table-card">
       <div class="table-wrapper">
-        <table class="products-table">
+        <table class="products-table" role="table" aria-label="Listado de productos financieros">
           <thead>
             <tr>
               <th scope="col">Logo</th>
               <th scope="col">Nombre del producto</th>
               <th scope="col">
-                Descripción
-                <span class="info-icon" title="Descripción detallada del producto financiero" aria-label="Más información sobre Descripción">i</span>
+                <span class="th-label">
+                  Descripción
+                  <app-tooltip-icon text="Descripción del producto financiero"></app-tooltip-icon>
+                </span>
               </th>
               <th scope="col">
-                Fecha de liberación
-                <span class="info-icon" title="Fecha en que el producto fue publicado" aria-label="Más información sobre Fecha de liberación">i</span>
+                <span class="th-label">
+                  Fecha de liberación
+                  <app-tooltip-icon text="Fecha en que el producto fue publicado"></app-tooltip-icon>
+                </span>
               </th>
               <th scope="col">
-                Fecha de reestructuración
-                <span class="info-icon" title="Fecha de la última reestructuración del producto" aria-label="Más información sobre Fecha de reestructuración">i</span>
+                <span class="th-label">
+                  Fecha de reestructuración
+                  <app-tooltip-icon text="Fecha de la última reestructuración del producto"></app-tooltip-icon>
+                </span>
               </th>
-              <th scope="col"></th>
+              <th scope="col" class="th-actions"></th>
             </tr>
           </thead>
           <tbody>
-            @for (product of displayedProducts(); track product.id) {
+            @if (paginatedProducts().length === 0 && !errorMessage()) {
               <tr>
+                <td colspan="6" class="empty-state">No se encontraron productos.</td>
+              </tr>
+            }
+            @for (product of paginatedProducts(); track product.id) {
+              <tr class="table-row">
                 <td class="logo-cell">
-                  @if (hasLogoError(product.id)) {
-                    <div
-                      class="avatar"
-                      [style.background-color]="getAvatarColor(product.name)"
-                      role="img"
-                      [attr.aria-label]="'Logo de ' + product.name"
-                    >{{ getInitial(product.name) }}</div>
-                  } @else {
+                  @if (!logoErrors.has(product.id)) {
                     <img
-                      class="product-logo"
+                      class="product-logo-img"
                       [src]="product.logo"
-                      [alt]="'Logo de ' + product.name"
+                      [alt]="product.name"
                       (error)="onLogoError(product.id)"
                     />
+                  } @else {
+                    <div class="product-logo-fallback">{{ getLogoInitial(product.name) }}</div>
                   }
                 </td>
-                <td>{{ product.name }}</td>
+                <td class="name-cell">{{ product.name }}</td>
                 <td>{{ product.description }}</td>
-                <td>{{ product.date_release | date:'dd/MM/yyyy' }}</td>
-                <td>{{ product.date_revision | date:'dd/MM/yyyy' }}</td>
+                <td>{{ product.date_release | date: 'dd/MM/yyyy' }}</td>
+                <td>{{ product.date_revision | date: 'dd/MM/yyyy' }}</td>
                 <td class="actions-cell">
-                  <div class="action-menu">
+                  <div class="menu-wrapper">
                     <button
-                      class="menu-btn"
-                      (click)="toggleMenu(product.id, $event)"
-                      [attr.aria-expanded]="openMenuId() === product.id"
+                      class="btn-dots"
+                      (click)="toggleMenu($event, product.id)"
+                      [attr.aria-expanded]="activeMenuId() === product.id"
                       aria-label="Opciones"
+                      type="button"
                     >&#8942;</button>
-                    @if (openMenuId() === product.id) {
-                      <ul class="dropdown" role="menu">
-                        <li role="none">
-                          <button role="menuitem" (click)="goToEdit(product.id, $event)">Editar</button>
-                        </li>
-                      </ul>
+                    @if (activeMenuId() === product.id) {
+                      <div class="context-menu" (mouseleave)="closeMenu()">
+                        <button
+                          class="menu-item menu-item--edit"
+                          type="button"
+                          (click)="editProduct($event, product.id)"
+                        >Editar</button>
+                      </div>
                     }
                   </div>
                 </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="6" class="no-results">No se encontraron productos.</td>
               </tr>
             }
           </tbody>
         </table>
       </div>
 
-    }
-
-    <!-- Footer -->
-    <div class="table-footer">
-      <span class="results-count">{{ totalResults() }} Resultados</span>
-      <select
-        class="page-size-select"
-        [value]="pageSize()"
-        (change)="onPageSizeChange($event)"
-        aria-label="Elementos por página"
-      >
-        @for (size of pageSizeOptions; track size) {
-          <option [value]="size">{{ size }}</option>
-        }
-      </select>
+      <div class="table-footer">
+        <span class="results-count">{{ filteredProducts().length }} Resultados</span>
+        <div class="page-size-wrapper">
+          <select
+            class="page-size-select"
+            [value]="pageSize()"
+            (change)="onPageSizeChange($event)"
+            aria-label="Cantidad de resultados por página"
+          >
+            @for (size of pageSizes; track size) {
+              <option [value]="size">{{ size }}</option>
+            }
+          </select>
+        </div>
+      </div>
     </div>
-
-  </main>
+  }
 
 </div>

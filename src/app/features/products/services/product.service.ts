@@ -36,7 +36,5 @@ export class ProductService {
     );
   }
 
-  delete(id: string): Observable<{ message: string }> {
-    return this.http.delete<{ message: string }>(`${this.baseUrl}/${id}`);
-  }
+
 }

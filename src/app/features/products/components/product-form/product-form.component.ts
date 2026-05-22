@@ -1,32 +1,17 @@
-import {
-  Component,
-  inject,
-  OnInit,
-  OnDestroy,
-  signal,
-} from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
   FormGroup,
   ReactiveFormsModule,
   Validators,
-  AbstractControl,
-  AsyncValidatorFn,
-  ValidationErrors,
 } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Observable, Subject, map, catchError, of, takeUntil } from 'rxjs';
 import { ProductService } from '../../services/product.service';
 import { Product } from '../../models/product.model';
-
-function todayOrLaterValidator(control: AbstractControl): ValidationErrors | null {
-  if (!control.value) return null;
-  const [year, month, day] = (control.value as string).split('-').map(Number);
-  const selected = new Date(year, month - 1, day);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return selected >= today ? null : { minDate: true };
-}
+import { CanDeactivateComponent } from '../../../../core/guards/unsaved-changes.guard';
+import { minDateTodayValidator } from '../../validators/min-date-today.validator';
+import { productIdAsyncValidator } from '../../validators/product-id-async.validator';
 
 @Component({
   selector: 'app-product-form',
@@ -35,101 +20,97 @@ function todayOrLaterValidator(control: AbstractControl): ValidationErrors | nul
   templateUrl: './product-form.component.html',
   styleUrl: './product-form.component.css',
 })
-export class ProductFormComponent implements OnInit, OnDestroy {
+export class ProductFormComponent implements OnInit, CanDeactivateComponent {
   private readonly fb = inject(FormBuilder);
   private readonly productService = inject(ProductService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  private readonly destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
 
-  form!: FormGroup;
+  readonly isSubmitting = signal(false);
+  readonly isLoadingProduct = signal(false);
+  readonly submitError = signal<string | null>(null);
+  readonly loadError = signal<string | null>(null);
   readonly editMode = signal(false);
-  readonly loadingProduct = signal(false);
-  submitting = false;
-  loadError: string | null = null;
-  submitError: string | null = null;
+
+  readonly form: FormGroup = this.fb.group({
+    id: [
+      '',
+      [Validators.required, Validators.minLength(3), Validators.maxLength(10)],
+      [productIdAsyncValidator(this.productService)],
+    ],
+    name: [
+      '',
+      [Validators.required, Validators.minLength(5), Validators.maxLength(100)],
+    ],
+    description: [
+      '',
+      [Validators.required, Validators.minLength(10), Validators.maxLength(200)],
+    ],
+    logo: ['', [Validators.required]],
+    date_release: ['', [Validators.required, minDateTodayValidator()]],
+    date_revision: [{ value: '', disabled: true }],
+  });
 
   get minDate(): string {
     return new Date().toISOString().split('T')[0];
   }
 
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id');
-    const isEdit = !!id;
-    this.editMode.set(isEdit);
+    const productId = this.route.snapshot.paramMap.get('id');
 
-    this.form = this.fb.group({
-      id: [
-        { value: id ?? '', disabled: isEdit },
-        [Validators.required, Validators.minLength(3), Validators.maxLength(10)],
-        isEdit ? [] : [this.idExistsValidator()],
-      ],
-      name: [
-        '',
-        [Validators.required, Validators.minLength(5), Validators.maxLength(100)],
-      ],
-      description: [
-        '',
-        [Validators.required, Validators.minLength(10), Validators.maxLength(200)],
-      ],
-      logo: ['', [Validators.required]],
-      date_release: ['', [Validators.required, todayOrLaterValidator]],
-      date_revision: [{ value: '', disabled: true }],
-    });
+    if (productId) {
+      this.editMode.set(true);
+      this.form.get('id')?.disable();
+      this.form.get('id')?.clearAsyncValidators();
+      this.form.get('id')?.updateValueAndValidity();
+      this.loadProduct(productId);
+    }
 
     this.form
-      .get('date_release')!
-      .valueChanges.pipe(takeUntil(this.destroy$))
-      .subscribe((dateStr: string) => {
-        if (dateStr) {
-          const [y, m, d] = dateStr.split('-').map(Number);
-          const revision = new Date(y + 1, m - 1, d);
-          this.form
-            .get('date_revision')!
-            .setValue(revision.toISOString().split('T')[0]);
-        } else {
-          this.form.get('date_revision')!.setValue('');
-        }
-      });
-
-    if (isEdit && id) {
-      this.loadProduct(id);
-    }
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
+      .get('date_release')
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((date: string) => this.syncRevisionDate(date));
   }
 
   private loadProduct(id: string): void {
-    this.loadingProduct.set(true);
-    this.productService.getById(id).subscribe({
-      next: (product) => {
-        this.form.patchValue({
-          id: product.id,
-          name: product.name,
-          description: product.description,
-          logo: product.logo,
-          date_release: product.date_release,
-        });
-        this.loadingProduct.set(false);
-      },
-      error: (err) => {
-        this.loadError = err.userMessage ?? 'No se pudo cargar el producto.';
-        this.loadingProduct.set(false);
-      },
-    });
+    this.isLoadingProduct.set(true);
+    this.loadError.set(null);
+
+    this.productService
+      .getById(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (product) => {
+          this.form.patchValue({
+            id: product.id,
+            name: product.name,
+            description: product.description,
+            logo: product.logo,
+            date_release: product.date_release,
+          });
+          this.syncRevisionDate(product.date_release);
+          this.isLoadingProduct.set(false);
+        },
+        error: (err) => {
+          this.loadError.set(err?.userMessage ?? 'Error al cargar el producto.');
+          this.isLoadingProduct.set(false);
+        },
+      });
   }
 
-  private idExistsValidator(): AsyncValidatorFn {
-    return (control: AbstractControl): Observable<ValidationErrors | null> => {
-      if (!control.value || control.value.length < 3) return of(null);
-      return this.productService.checkId(control.value).pipe(
-        map((exists) => (exists ? { idExists: true } : null)),
-        catchError(() => of(null))
-      );
-    };
+  private syncRevisionDate(dateStr: string): void {
+    if (!dateStr) {
+      this.form.get('date_revision')?.setValue('');
+      return;
+    }
+    const release = new Date(dateStr + 'T00:00:00');
+    release.setFullYear(release.getFullYear() + 1);
+    this.form.get('date_revision')?.setValue(release.toISOString().split('T')[0]);
+  }
+
+  canDeactivate(): boolean {
+    return !this.form?.dirty || this.isSubmitting();
   }
 
   onSubmit(): void {
@@ -137,43 +118,57 @@ export class ProductFormComponent implements OnInit, OnDestroy {
       this.form.markAllAsTouched();
       return;
     }
-    this.submitting = true;
-    this.submitError = null;
+
+    this.isSubmitting.set(true);
+    this.submitError.set(null);
 
     const product: Product = this.form.getRawValue() as Product;
     const request$ = this.editMode()
       ? this.productService.update(product)
       : this.productService.create(product);
 
-    request$.subscribe({
-      next: () => this.router.navigate(['/products']),
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.form.markAsPristine();
+        this.isSubmitting.set(false);
+        this.router.navigate(['/products']);
+      },
       error: (err) => {
-        this.submitError =
-          err.userMessage ??
-          (this.editMode()
-            ? 'Error al actualizar el producto. Intente nuevamente.'
-            : 'Error al crear el producto. Intente nuevamente.');
-        this.submitting = false;
+        this.submitError.set(err?.userMessage ?? 'Error al guardar el producto.');
+        this.isSubmitting.set(false);
       },
     });
   }
 
   onReset(): void {
-    this.form.reset();
-    this.submitError = null;
+    if (!this.editMode()) {
+      this.form.reset();
+    } else {
+      this.form.get('name')?.reset();
+      this.form.get('description')?.reset();
+      this.form.get('logo')?.reset();
+      this.form.get('date_release')?.reset();
+      this.form.get('date_revision')?.setValue('');
+    }
+    this.submitError.set(null);
+  }
+
+  onCancel(): void {
+    this.router.navigate(['/products']);
   }
 
   isInvalid(field: string): boolean {
-    const control = this.form.get(field);
-    return !!(control?.invalid && control?.touched);
+    const ctrl = this.form.get(field);
+    return !!(ctrl?.invalid && (ctrl.dirty || ctrl.touched));
   }
 
-  isPending(field: string): boolean {
-    return this.form.get(field)?.status === 'PENDING';
+  hasError(field: string, error: string): boolean {
+    const ctrl = this.form.get(field);
+    return !!(ctrl?.hasError(error) && (ctrl.dirty || ctrl.touched));
   }
 
-  getError(field: string, error: string): boolean {
-    return !!this.form.get(field)?.hasError(error);
+  get idPending(): boolean {
+    return !!this.form.get('id')?.pending;
   }
 }
 
